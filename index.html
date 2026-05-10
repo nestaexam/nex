@@ -1,0 +1,351 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEX - Nesta Exam Portal</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a192f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/pw/AP1GczNxA5rlAkNbyzOXScg01Z93OG4tqIQkIw8O3N9Yg7lDHHbKtQdaranNlAe8_c0Y98EoLrgpjjOh7Lwtk1mCPshNM8EkCvaDucizmGcxY7VLANLYFZwtBGO5Lv9q34A8r3d1oPD5eQ8_5KzmiIaI58vgEQ=w192-h192">
+
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:italic,wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-serif-aesthetic { font-family: 'Playfair Display', serif; }
+        .footer-calibri { 
+            font-family: 'Calibri', 'Candara', 'Segoe UI', 'Optima', 'Arial', sans-serif; 
+            letter-spacing: 0px !important;
+        }
+        
+        @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .animate-pulse-slow { animation: pulse-slow 3s infinite; }
+        
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-bounce-slow { animation: bounce-slow 4s infinite ease-in-out; }
+
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0a192f; }
+        ::-webkit-scrollbar-thumb { background: #112240; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #eab308; }
+
+
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #0a192f inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-[#0a192f] text-slate-300 selection:bg-[#eab308] selection:text-slate-900">
+    <div id="root"></div>
+
+
+    <!-- React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+
+        const nexLogoUrl = "https://lh3.googleusercontent.com/pw/AP1GczNxA5rlAkNbyzOXScg01Z93OG4tqIQkIw8O3N9Yg7lDHHbKtQdaranNlAe8_c0Y98EoLrgpjjOh7Lwtk1mCPshNM8EkCvaDucizmGcxY7VLANLYFZwtBGO5Lv9q34A8r3d1oPD5eQ8_5KzmiIaI58vgEQ=w786-h786-s-no-gm?authuser=0";
+
+
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (iconRef.current) {
+                    iconRef.current.innerHTML = lucide.createIcons({
+                        icons: { [name]: lucide[name] }
+                    });
+                }
+            }, [name]);
+            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
+        };
+
+
+        const App = () => {
+            const [view, setView] = useState('landing');
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [studentInfo, setStudentInfo] = useState({ nis: '', token: '' });
+            const [violationCount, setViolationCount] = useState(0);
+            const [activeExam, setActiveExam] = useState(null);
+            
+            // Mock Data Jadwal
+            const [schedules] = useState([
+                { id: '1', mapel: 'Pendidikan Agama & Budi Pekerti', startTime: new Date().toISOString(), endTime: new Date(Date.now() + 7200000).toISOString(), token: 'PAI2026' },
+                { id: '2', mapel: 'Matematika Terapan', startTime: new Date(Date.now() + 86400000).toISOString(), endTime: new Date(Date.now() + 93600000).toISOString(), token: 'MTK2026' }
+            ]);
+
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+
+            const handleStartExam = () => {
+                if (!studentInfo.nis || !studentInfo.token) return alert("Mohon masukkan NIS dan Token!");
+                const found = schedules.find(s => s.token === studentInfo.token.toUpperCase());
+                if (!found) return alert("Token tidak valid!");
+                
+                setActiveExam(found);
+                setView('exam');
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+            };
+
+
+            const LandingView = () => (
+                <div className="max-w-4xl mx-auto mt-16 md:mt-24 px-4 animate-in fade-in zoom-in duration-700">
+                    <div className="text-center mb-16">
+                        <h2 className="text-xl md:text-2xl font-light text-white italic tracking-[0.15em] mb-4 font-serif-aesthetic">
+                            Selamat Datang di Portal Nesta Exam (NEX)
+                        </h2>
+                        <p className="text-slate-500 font-medium text-[10px] md:text-xs tracking-[0.3em] uppercase opacity-70">
+                            Sistem Ujian Terintegrasi SMPN 1 Tambakdahan
+                        </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <button onClick={() => setView('login-student')} className="group glass-card bg-[#112240]/80 p-10 rounded-[3rem] border border-white/5 hover:border-[#eab308]/40 transition-all duration-500 text-left shadow-2xl relative overflow-hidden">
+                            <div className="bg-[#eab308] w-16 h-16 rounded-2xl flex items-center justify-center text-slate-900 mb-8 group-hover:scale-110 transition-transform overflow-hidden p-0.5">
+                                <img src={nexLogoUrl} className="w-full h-full object-cover rounded-xl" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white mb-2 italic tracking-tighter">Portal siswa</h3>
+                            <p className="text-slate-500 text-sm leading-relaxed mb-6 font-medium">Masuk untuk mengerjakan ujian mata pelajaran yang tersedia hari ini.</p>
+                            <div className="flex items-center gap-2 text-[#eab308] font-black text-[10px] uppercase tracking-[0.2em] group-hover:gap-4 transition-all">
+                                Masuk sekarang <Icon name="ChevronRight" size={16} />
+                            </div>
+                        </button>
+
+
+                        <button onClick={() => setView('login-staff')} className="group glass-card bg-[#112240]/80 p-10 rounded-[3rem] border border-white/5 hover:border-[#64ffda]/40 transition-all duration-500 text-left shadow-2xl relative overflow-hidden">
+                            <div className="bg-white/5 border border-white/10 w-16 h-16 rounded-2xl flex items-center justify-center text-[#64ffda] mb-8 group-hover:scale-110 transition-transform overflow-hidden p-0.5">
+                                <img src={nexLogoUrl} className="w-full h-full object-cover rounded-xl opacity-80" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white mb-2 italic tracking-tighter">Portal guru & staf</h3>
+                            <p className="text-slate-500 text-sm leading-relaxed mb-6 font-medium">Kelola jadwal, monitoring kecurangan, dan publikasikan hasil ujian.</p>
+                            <div className="flex items-center gap-2 text-[#64ffda] font-black text-[10px] uppercase tracking-[0.2em] group-hover:gap-4 transition-all">
+                                Akses dashboard <Icon name="ChevronRight" size={16} />
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            );
+
+
+            const StudentLoginView = () => (
+                <div className="max-w-6xl mx-auto mt-10 px-4 animate-in slide-in-from-bottom-8 duration-700">
+                    <button onClick={() => setView('landing')} className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2 hover:text-white transition-colors mb-8">
+                        <Icon name="ArrowLeft" size={14} /> Kembali ke pilihan
+                    </button>
+
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        <div className="lg:col-span-5 bg-[#112240] p-10 rounded-[3.5rem] shadow-2xl border border-white/5 space-y-8 h-fit">
+                            <div className="text-center">
+                                <div className="w-24 h-24 bg-white/5 rounded-[2.5rem] border border-white/10 flex items-center justify-center mx-auto mb-6 shadow-2xl overflow-hidden p-1.5 group">
+                                    <img src={nexLogoUrl} className="w-full h-full object-cover rounded-[2rem] group-hover:scale-110 transition-transform duration-700" />
+                                </div>
+                                <h2 className="text-3xl font-black text-white italic tracking-tighter leading-tight">Masuk ujian</h2>
+                                <p className="text-slate-400 text-sm mt-2 tracking-tight font-medium opacity-60 italic">Identitas SMPN 1 Tambakdahan</p>
+                            </div>
+
+
+                            <div className="space-y-4">
+                                <div className="space-y-2 group">
+                                    <label className="text-[10px] font-black text-slate-500 ml-2 tracking-widest uppercase">Nomor induk siswa</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Masukkan NIS Anda" 
+                                        className="w-full p-5 bg-[#0a192f] border border-white/5 rounded-2xl outline-none focus:border-[#eab308] text-white font-bold transition-all shadow-inner" 
+                                        onChange={e => setStudentInfo({...studentInfo, nis: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-2 group">
+                                    <label className="text-[10px] font-black text-slate-500 ml-2 tracking-widest uppercase">Token ujian</label>
+                                    <div className="relative">
+                                        <Icon name="Lock" size={20} className="absolute left-5 top-5 text-slate-700" />
+                                        <input 
+                                            type="text" 
+                                            placeholder="TOKEN-XXXX" 
+                                            className="w-full p-5 pl-14 bg-[#0a192f] border border-white/5 rounded-2xl outline-none focus:border-[#eab308] text-[#eab308] font-mono font-black uppercase tracking-[0.3em] transition-all shadow-inner" 
+                                            onChange={e => setStudentInfo({...studentInfo, token: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                                <button onClick={handleStartExam} className="w-full py-5 bg-[#eab308] text-slate-900 font-black text-xs rounded-2xl hover:bg-[#facc15] shadow-xl shadow-yellow-500/10 flex items-center justify-center gap-3 active:scale-95 transition-all duration-300 uppercase tracking-[0.2em]">
+                                    <Icon name="Play" size={18} /> Mulai mengerjakan
+                                </button>
+                            </div>
+                        </div>
+
+
+                        <div className="lg:col-span-7 space-y-6">
+                            <div className="flex items-center gap-4 mb-2">
+                                <div className="bg-[#64ffda]/10 p-2.5 rounded-xl text-[#64ffda]"><Icon name="Calendar" size={24} /></div>
+                                <div>
+                                    <h3 className="text-xl font-black text-white italic tracking-tighter leading-none">Jadwal ujian hari ini</h3>
+                                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Mata pelajaran aktif</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {schedules.map((s, i) => (
+                                    <div key={i} className="bg-[#112240]/50 p-6 rounded-[2.5rem] border border-white/5 relative group overflow-hidden shadow-xl">
+                                        <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-[9px] font-black uppercase tracking-widest bg-green-500/10 text-green-400 border-b border-l border-green-500/20">
+                                            Aktif
+                                        </div>
+                                        <h4 className="text-base font-black text-white mb-4 pr-12 leading-tight italic">{s.mapel}</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                                                <Icon name="Clock" size={14} className="text-sky-400" />
+                                                <span>08:00 - 10:00 WIB</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="bg-white/5 p-6 rounded-[2.5rem] border border-white/5 mt-4">
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Tata tertib sistem:</h4>
+                                <ul className="space-y-3 text-[11px] text-slate-400 font-medium italic">
+                                    <li className="flex gap-3"><Icon name="ShieldCheck" size={14} className="text-[#64ffda] shrink-0" /> Dilarang keluar dari tab ujian atau layar penuh.</li>
+                                    <li className="flex gap-3"><Icon name="ShieldCheck" size={14} className="text-[#64ffda] shrink-0" /> Sistem mencatat setiap upaya kecurangan secara otomatis.</li>
+                                    <li className="flex gap-3"><Icon name="ShieldCheck" size={14} className="text-[#64ffda] shrink-0" /> Token hanya bisa digunakan satu kali per NIS.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+
+            return (
+                <div className="min-h-screen flex flex-col overflow-x-hidden">
+                    <nav className="bg-[#112240] border-b border-white/5 px-6 md:px-12 py-5 flex justify-between items-center sticky top-0 z-[60] shadow-2xl">
+                        <div className="flex items-center gap-4 group cursor-pointer" onClick={() => setView('landing')}>
+                            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg group-hover:rotate-12 transition-transform duration-500 bg-[#eab308] p-0.5">
+                                <img src={nexLogoUrl} className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                            <h1 className="text-xl font-black uppercase tracking-tighter text-white italic leading-none">NEX <span className="text-[#eab308] not-italic text-[10px] ml-1 font-bold opacity-60">(Nesta Exam)</span></h1>
+                        </div>
+                        <div className="flex items-center gap-6">
+                            <div className="hidden md:flex items-center gap-2 text-[11px] font-mono font-bold text-[#64ffda] bg-white/5 px-4 py-2 rounded-xl border border-white/10 animate-pulse-slow">
+                                <Icon name="Clock" size={16}/> {currentTime.toLocaleTimeString('id-ID')}
+                            </div>
+                            {view !== 'landing' && (
+                                <button onClick={() => setView('landing')} className="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em] hover:text-rose-300 transition-all">Keluar port</button>
+                            )}
+                        </div>
+                    </nav>
+
+
+                    <div className="flex-1 pb-20">
+                        {view === 'landing' && <LandingView />}
+                        {view === 'login-student' && <StudentLoginView />}
+                        {view === 'login-staff' && (
+                            <div className="max-w-md mx-auto bg-[#112240] p-12 rounded-[3.5rem] shadow-2xl border border-white/5 mt-12 space-y-10 px-6 animate-in slide-in-from-bottom-8 duration-700">
+                                <button onClick={() => setView('landing')} className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2 hover:text-white transition-colors">
+                                    <Icon name="ArrowLeft" size={14} /> Kembali ke pilihan
+                                </button>
+                                <div className="text-center">
+                                    <div className="w-24 h-24 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-2xl overflow-hidden p-1.5">
+                                        <img src={nexLogoUrl} className="w-full h-full object-cover rounded-[1.5rem] opacity-90" />
+                                    </div>
+                                    <h2 className="text-3xl font-black text-white italic tracking-tighter leading-none">Login staf & guru</h2>
+                                    <p className="text-slate-400 text-sm mt-2 font-medium tracking-tight opacity-60 italic">Manajemen sistem SMPN 1 Tambakdahan</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={() => alert("Dashboard Guru sedang dimuat...")} className="bg-[#0a192f] border border-white/5 p-8 rounded-3xl flex flex-col items-center gap-3 hover:border-[#64ffda] hover:bg-[#64ffda]/5 transition-all group">
+                                        <Icon name="Users" size={24} className="text-slate-600 group-hover:text-[#64ffda]" />
+                                        <span className="text-[9px] font-black uppercase text-slate-500 group-hover:text-white tracking-widest text-center">Login guru</span>
+                                    </button>
+                                    <button onClick={() => alert("Dashboard Admin sedang dimuat...")} className="bg-[#0a192f] border border-white/5 p-8 rounded-3xl flex flex-col items-center gap-3 hover:border-[#eab308] hover:bg-[#eab308]/5 transition-all group">
+                                        <Icon name="Shield" size={24} className="text-slate-600 group-hover:text-[#eab308]" />
+                                        <span className="text-[9px] font-black uppercase text-slate-500 group-hover:text-white tracking-widest text-center">Login admin</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+
+                        {view === 'exam' && activeExam && (
+                            <div className="fixed inset-0 bg-[#0a192f] z-[1000] flex flex-col animate-in fade-in duration-1000">
+                                <header className="bg-[#112240] text-white px-8 py-5 flex justify-between items-center border-b border-white/5 shadow-2xl">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#eab308] p-0.5 shadow-lg"><img src={nexLogoUrl} className="w-full h-full object-cover rounded-lg" /></div>
+                                        <div>
+                                            <h4 className="text-sm font-black uppercase text-[#64ffda] tracking-widest italic leading-none mb-1">{activeExam.mapel}</h4>
+                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest opacity-50">Siswa Aktif &bull; Proctoring On</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-6">
+                                        <div className="px-5 py-2.5 rounded-xl text-[10px] font-black border border-white/10 uppercase tracking-widest bg-green-500/10 text-green-400">
+                                            Kecurangan: 0 / 3
+                                        </div>
+                                        <button onClick={() => {if(confirm('Kumpulkan jawaban sekarang?')) setView('landing');}} className="bg-[#eab308] text-slate-900 px-10 py-3 rounded-xl text-[10px] font-black shadow-xl hover:bg-[#facc15] transition-all tracking-[0.2em] uppercase">Submit</button>
+                                    </div>
+                                </header>
+                                <div className="flex-1 bg-white relative">
+                                    <iframe 
+                                        src="about:blank" 
+                                        className="w-full h-full border-none select-none" 
+                                        title="Exam Frame" 
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-[#0a192f]/90 text-slate-500 text-xs italic pointer-events-none">
+                                        [ Konten Ujian G-Form Akan Terpasang di Sini ]
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    <footer className="mt-auto py-16 border-t border-white/5 text-center bg-[#0a192f]">
+                        <div className="flex justify-center gap-12 mb-8 opacity-20 text-[#64ffda] grayscale hover:grayscale-0 transition-all duration-1000">
+                            <img src={nexLogoUrl} className="w-12 h-12 object-contain" />
+                            <Icon name="Calendar" size={32} /> 
+                            <Icon name="Award" size={32} className="animate-bounce-slow" />
+                        </div>
+                        <p className="footer-calibri text-[11px] font-medium tracking-normal text-slate-600 italic leading-loose">
+                            Nex (Nesta exam) v10.0 &bull; Smpn 1 tambakdahan <br/>
+                            &copy; 2026 High integrity proctoring system
+                        </p>
+                    </footer>
+                </div>
+            );
+        };
+
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
+
+```

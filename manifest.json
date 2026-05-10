@@ -1,0 +1,24 @@
+{
+  "name": "Nesta Exam (NEX)",
+  "short_name": "NEX",
+  "description": "Sistem Ujian Terintegrasi SMPN 1 Tambakdahan",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a192f",
+  "theme_color": "#0a192f",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://lh3.googleusercontent.com/pw/AP1GczNxA5rlAkNbyzOXScg01Z93OG4tqIQkIw8O3N9Yg7lDHHbKtQdaranNlAe8_c0Y98EoLrgpjjOh7Lwtk1mCPshNM8EkCvaDucizmGcxY7VLANLYFZwtBGO5Lv9q34A8r3d1oPD5eQ8_5KzmiIaI58vgEQ=w192-h192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://lh3.googleusercontent.com/pw/AP1GczNxA5rlAkNbyzOXScg01Z93OG4tqIQkIw8O3N9Yg7lDHHbKtQdaranNlAe8_c0Y98EoLrgpjjOh7Lwtk1mCPshNM8EkCvaDucizmGcxY7VLANLYFZwtBGO5Lv9q34A8r3d1oPD5eQ8_5KzmiIaI58vgEQ=w512-h512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
